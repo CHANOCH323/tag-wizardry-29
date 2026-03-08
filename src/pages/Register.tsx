@@ -1,10 +1,18 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { register } from "@/services/api";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus, Tag } from "lucide-react";
 import { strings } from "@/constants/strings";
@@ -17,27 +25,38 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { setAuthData } = useAuth();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim() || !displayName.trim()) {
-      toast({ title: strings.common.error, description: strings.auth.fillAllFields, variant: "destructive" });
+      toast({
+        title: strings.common.error,
+        description: strings.auth.fillAllFields,
+        variant: "destructive",
+      });
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { username: username.trim(), display_name: displayName.trim() },
-        emailRedirectTo: window.location.origin,
-      },
-    });
-    if (error) {
-      toast({ title: strings.auth.registerError, description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: strings.auth.registerSuccess, description: strings.auth.registerWelcome });
+    try {
+      const response = await register({
+        email,
+        password,
+        username: username.trim(),
+        display_name: displayName.trim(),
+      });
+      setAuthData(response.user, response.profile);
+      toast({
+        title: strings.auth.registerSuccess,
+        description: strings.auth.registerWelcome,
+      });
       navigate("/");
+    } catch (error: any) {
+      toast({
+        title: strings.auth.registerError,
+        description: error.message,
+        variant: "destructive",
+      });
     }
     setLoading(false);
   };
@@ -49,26 +68,59 @@ export default function Register() {
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
             <Tag className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold">{strings.auth.registerTitle}</CardTitle>
+          <CardTitle className="text-2xl font-bold">
+            {strings.auth.registerTitle}
+          </CardTitle>
           <CardDescription>{strings.auth.registerSubtitle}</CardDescription>
         </CardHeader>
         <form onSubmit={handleRegister}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">{strings.auth.email}</Label>
-              <Input id="email" type="email" placeholder="your@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required dir="ltr" className="text-left" />
+              <Input
+                id="email"
+                type="email"
+                placeholder="your@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                dir="ltr"
+                className="text-left"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="username">{strings.auth.username}</Label>
-              <Input id="username" placeholder={strings.auth.usernamePlaceholder} value={username} onChange={(e) => setUsername(e.target.value)} required />
+              <Input
+                id="username"
+                placeholder={strings.auth.usernamePlaceholder}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="displayName">{strings.auth.displayName}</Label>
-              <Input id="displayName" placeholder={strings.auth.displayNamePlaceholder} value={displayName} onChange={(e) => setDisplayName(e.target.value)} required />
+              <Input
+                id="displayName"
+                placeholder={strings.auth.displayNamePlaceholder}
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">{strings.auth.password}</Label>
-              <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required dir="ltr" className="text-left" minLength={6} />
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                dir="ltr"
+                className="text-left"
+                minLength={6}
+              />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
@@ -78,7 +130,12 @@ export default function Register() {
             </Button>
             <p className="text-sm text-muted-foreground">
               {strings.auth.hasAccount}{" "}
-              <Link to="/login" className="text-primary font-medium hover:underline">{strings.auth.loginHere}</Link>
+              <Link
+                to="/login"
+                className="text-primary font-medium hover:underline"
+              >
+                {strings.auth.loginHere}
+              </Link>
             </p>
           </CardFooter>
         </form>
