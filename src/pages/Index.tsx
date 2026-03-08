@@ -115,9 +115,18 @@ export default function Index() {
     setLoading(false);
   }, [filters]);
 
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
+
   useEffect(() => {
     fetchTags();
   }, [fetchTags]);
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(tags.length / pageSize));
+  const paginatedTags = tags.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const handleDelete = async (id: string) => {
     await supabase.from("tags").update({ is_deleted: true }).eq("id", id);
