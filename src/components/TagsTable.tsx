@@ -93,6 +93,10 @@ export default function TagsTable({ tags, onEdit, onDelete, onViewHistory }: Pro
                   <TableCell className="text-sm text-muted-foreground">{format(new Date(tag.updated_at), "dd/MM/yy HH:mm")}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{format(new Date(tag.created_at), "dd/MM/yy HH:mm")}</TableCell>
                   <TableCell>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onViewHistory(tag.id)} title="היסטוריית גרסאות">
+                      <History className="h-4 w-4" />
+                      <span className="sr-only">היסטוריה</span>
+                    </Button>
                     <Badge variant="secondary">{tag.version_count}</Badge>
                   </TableCell>
                   <TableCell>
