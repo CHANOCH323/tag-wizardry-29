@@ -5,12 +5,53 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { LogOut, Settings, Tag, Moon, Sun } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/hooks/use-theme";
+import { strings } from "@/constants/strings";
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+function UserAvatar({ displayName, avatarUrl }: { displayName?: string; avatarUrl?: string | null }) {
+  return (
+    <Avatar className="h-8 w-8">
+      <AvatarImage src={avatarUrl || undefined} />
+      <AvatarFallback className="bg-primary/10 text-primary text-sm">
+        {displayName?.charAt(0) || "?"}
+      </AvatarFallback>
+    </Avatar>
+  );
+}
+
+function UserMenu() {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
 
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="gap-2 px-2">
+          <UserAvatar displayName={profile?.display_name} avatarUrl={profile?.avatar_url} />
+          <span className="text-sm font-medium hidden sm:inline">{profile?.display_name}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-48">
+        <DropdownMenuItem onClick={toggleTheme} className="gap-2 cursor-pointer">
+          {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          {theme === "dark" ? strings.theme.lightMode : strings.theme.darkMode}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate("/settings")} className="gap-2 cursor-pointer">
+          <Settings className="h-4 w-4" />
+          {strings.settings.title}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={signOut} className="gap-2 cursor-pointer text-destructive">
+          <LogOut className="h-4 w-4" />
+          {strings.auth.logout}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const { profile } = useAuth();
   const fontSizeClass = profile?.font_size ? `font-size-${profile.font_size}` : "font-size-medium";
 
   return (
@@ -21,36 +62,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
               <Tag className="h-5 w-5 text-primary" />
             </div>
-            <h1 className="text-lg font-bold text-foreground">ניהול תיוגים</h1>
+            <h1 className="text-lg font-bold text-foreground">{strings.app.title}</h1>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="gap-2 px-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={profile?.avatar_url || undefined} />
-                  <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                    {profile?.display_name?.charAt(0) || "?"}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-sm font-medium hidden sm:inline">{profile?.display_name}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48">
-              <DropdownMenuItem onClick={toggleTheme} className="gap-2 cursor-pointer">
-                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                {theme === "dark" ? "מצב בהיר" : "מצב כהה"}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/settings")} className="gap-2 cursor-pointer">
-                <Settings className="h-4 w-4" />
-                הגדרות
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={signOut} className="gap-2 cursor-pointer text-destructive">
-                <LogOut className="h-4 w-4" />
-                התנתק
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <UserMenu />
         </div>
       </header>
       <main className="container py-6">{children}</main>

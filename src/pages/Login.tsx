@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { LogIn, Tag } from "lucide-react";
+import { strings } from "@/constants/strings";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -20,7 +21,7 @@ export default function Login() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      toast({ title: "שגיאה בהתחברות", description: error.message, variant: "destructive" });
+      toast({ title: strings.auth.loginError, description: error.message, variant: "destructive" });
     } else {
       navigate("/");
     }
@@ -34,48 +35,28 @@ export default function Login() {
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
             <Tag className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold">מערכת ניהול תיוגים</CardTitle>
-          <CardDescription>התחבר למערכת כדי להמשיך</CardDescription>
+          <CardTitle className="text-2xl font-bold">{strings.auth.loginTitle}</CardTitle>
+          <CardDescription>{strings.auth.loginSubtitle}</CardDescription>
         </CardHeader>
         <form onSubmit={handleLogin}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">אימייל</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                dir="ltr"
-                className="text-left"
-              />
+              <Label htmlFor="email">{strings.auth.email}</Label>
+              <Input id="email" type="email" placeholder="your@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required dir="ltr" className="text-left" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">סיסמא</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                dir="ltr"
-                className="text-left"
-              />
+              <Label htmlFor="password">{strings.auth.password}</Label>
+              <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required dir="ltr" className="text-left" />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <Button type="submit" className="w-full gap-2" disabled={loading}>
               <LogIn className="h-4 w-4" />
-              {loading ? "מתחבר..." : "התחבר"}
+              {loading ? strings.auth.loggingIn : strings.auth.login}
             </Button>
             <p className="text-sm text-muted-foreground">
-              אין לך חשבון?{" "}
-              <Link to="/register" className="text-primary font-medium hover:underline">
-                הרשם כאן
-              </Link>
+              {strings.auth.noAccount}{" "}
+              <Link to="/register" className="text-primary font-medium hover:underline">{strings.auth.registerHere}</Link>
             </p>
           </CardFooter>
         </form>

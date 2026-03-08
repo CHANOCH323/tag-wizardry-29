@@ -7,6 +7,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Search, Filter, X, CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { strings } from "@/constants/strings";
 
 export interface TagFilters {
   questionSearch: string;
@@ -54,7 +55,7 @@ export default function TagsFilters({ filters, onChange }: Props) {
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="חיפוש לפי שאלה..."
+            placeholder={strings.filters.searchByQuestion}
             value={filters.questionSearch}
             onChange={(e) => update("questionSearch", e.target.value)}
             className="pr-10"
@@ -63,7 +64,7 @@ export default function TagsFilters({ filters, onChange }: Props) {
         <div className="relative min-w-[200px]">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="חיפוש לפי תשובה (טקסט חופשי)..."
+            placeholder={strings.filters.searchByAnswer}
             value={filters.answerSearch}
             onChange={(e) => update("answerSearch", e.target.value)}
             className="pr-10"
@@ -71,12 +72,12 @@ export default function TagsFilters({ filters, onChange }: Props) {
         </div>
         <Button variant={showFilters ? "secondary" : "outline"} onClick={() => setShowFilters(!showFilters)} className="gap-2">
           <Filter className="h-4 w-4" />
-          פילטרים
+          {strings.filters.filters}
         </Button>
         {hasFilters && (
           <Button variant="ghost" size="sm" onClick={() => onChange(emptyFilters)} className="gap-1 text-destructive">
             <X className="h-3 w-3" />
-            נקה הכל
+            {strings.filters.clearAll}
           </Button>
         )}
       </div>
@@ -84,54 +85,54 @@ export default function TagsFilters({ filters, onChange }: Props) {
       {showFilters && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 p-4 rounded-lg bg-card border">
           <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">שם קובייה</label>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">{strings.filters.cubeName}</label>
             <Select value={filters.cubeName} onValueChange={(v) => update("cubeName", v === "all" ? "" : v)}>
-              <SelectTrigger><SelectValue placeholder="הכל" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={strings.common.all} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">הכל</SelectItem>
+                <SelectItem value="all">{strings.common.all}</SelectItem>
                 {cubes.map((c) => <SelectItem key={c.cube_id} value={c.name}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">משתמש</label>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">{strings.filters.user}</label>
             <Select value={filters.userId} onValueChange={(v) => update("userId", v === "all" ? "" : v)}>
-              <SelectTrigger><SelectValue placeholder="הכל" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={strings.common.all} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">הכל</SelectItem>
+                <SelectItem value="all">{strings.common.all}</SelectItem>
                 {users.map((u) => <SelectItem key={u.user_id} value={u.user_id}>{u.display_name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">סוג תשובה</label>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">{strings.tags.answerType}</label>
             <Select value={filters.answerType} onValueChange={(v) => update("answerType", v === "all" ? "" : v)}>
-              <SelectTrigger><SelectValue placeholder="הכל" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={strings.common.all} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">הכל</SelectItem>
-                <SelectItem value="cubes">קוביות</SelectItem>
-                <SelectItem value="free_text">טקסט חופשי</SelectItem>
+                <SelectItem value="all">{strings.common.all}</SelectItem>
+                <SelectItem value="cubes">{strings.tags.cubes}</SelectItem>
+                <SelectItem value="free_text">{strings.tags.freeText}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">טיוטה</label>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">{strings.tags.draft}</label>
             <Select value={filters.isDraft} onValueChange={(v) => update("isDraft", v === "all" ? "" : v)}>
-              <SelectTrigger><SelectValue placeholder="הכל" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={strings.common.all} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">הכל</SelectItem>
-                <SelectItem value="true">כן</SelectItem>
-                <SelectItem value="false">לא</SelectItem>
+                <SelectItem value="all">{strings.common.all}</SelectItem>
+                <SelectItem value="true">{strings.common.yes}</SelectItem>
+                <SelectItem value="false">{strings.common.no}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">מתאריך</label>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">{strings.filters.fromDate}</label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-full justify-start text-right gap-2 font-normal">
                   <CalendarIcon className="h-4 w-4" />
-                  {filters.dateFrom ? format(filters.dateFrom, "dd/MM/yyyy") : "בחר תאריך"}
+                  {filters.dateFrom ? format(filters.dateFrom, "dd/MM/yyyy") : strings.filters.selectDate}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">

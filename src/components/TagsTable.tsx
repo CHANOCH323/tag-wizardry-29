@@ -2,10 +2,12 @@ import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Edit, Trash2, History, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Edit, Trash2, History } from "lucide-react";
 import { format } from "date-fns";
 import CubesPieChart from "./CubesPieChart";
+import SortableHead, { SortDir, SortKey } from "./SortableHead";
+import DeleteTagDialog from "./DeleteTagDialog";
+import { strings } from "@/constants/strings";
 
 interface CubeEntry {
   cube_id: string;
@@ -26,9 +28,6 @@ export interface TagRow {
   version_count: number;
 }
 
-type SortKey = "question" | "answer_type" | "is_draft" | "last_editor" | "updated_at" | "created_at" | "version_count";
-type SortDir = "asc" | "desc";
-
 interface Props {
   tags: TagRow[];
   onEdit: (id: string) => void;
@@ -36,28 +35,32 @@ interface Props {
   onViewHistory: (id: string) => void;
 }
 
-function SortableHead({ label, sortKey, currentKey, currentDir, onSort }: {
-  label: string;
-  sortKey: SortKey;
-  currentKey: SortKey | null;
-  currentDir: SortDir;
-  onSort: (key: SortKey) => void;
-}) {
-  const active = currentKey === sortKey;
+function TagAnswerCell({ tag }: { tag: TagRow }) {
+  if (tag.answer_type === "cubes" && tag.cubes) {
+    return (
+      <div className="flex items-center gap-2">
+        <CubesPieChart cubes={tag.cubes} />
+        <div className="flex flex-wrap gap-1">
+          {tag.cubes.map((c) => (
+            <Badge key={c.cube_id} variant="outline" className="text-xs">
+              {c.cube_name}
+            </Badge>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return <span className="text-sm truncate block">{tag.free_text_content || "-"}</span>;
+}
+
+function TagActionsCell({ tag, onEdit, onDelete }: { tag: TagRow; onEdit: () => void; onDelete: () => void }) {
   return (
-    <TableHead
-      className="text-right font-semibold cursor-pointer select-none hover:bg-muted/30 transition-colors"
-      onClick={() => onSort(sortKey)}
-    >
-      <span className="inline-flex items-center gap-1">
-        {label}
-        {active ? (
-          currentDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
-        ) : (
-          <ArrowUpDown className="h-3 w-3 opacity-30" />
-        )}
-      </span>
-    </TableHead>
+    <div className="flex gap-1">
+      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onEdit}>
+        <Edit className="h-4 w-4" />
+      </Button>
+      <DeleteTagDialog onConfirm={onDelete} />
+    </div>
   );
 }
 
@@ -91,29 +94,31 @@ export default function TagsTable({ tags, onEdit, onDelete, onViewHistory }: Pro
     });
   }
 
+  const sortProps = { currentKey: sortKey, currentDir: sortDir, onSort: handleSort };
+
   return (
     <div className="rounded-lg border bg-card overflow-hidden">
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead className="text-right font-semibold">מזהה</TableHead>
-              <SortableHead label="שאלה" sortKey="question" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
-              <SortableHead label="סוג תשובה" sortKey="answer_type" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
-              <TableHead className="text-right font-semibold">ערך תשובה</TableHead>
-              <SortableHead label="טיוטה" sortKey="is_draft" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
-              <SortableHead label="עורך אחרון" sortKey="last_editor" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
-              <SortableHead label="עודכן" sortKey="updated_at" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
-              <SortableHead label="נוצר" sortKey="created_at" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
-              <SortableHead label="גרסאות" sortKey="version_count" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
-              <TableHead className="text-right font-semibold">פעולות</TableHead>
+              <TableHead className="text-right font-semibold">{strings.common.id}</TableHead>
+              <SortableHead label={strings.tags.question} sortKey="question" {...sortProps} />
+              <SortableHead label={strings.tags.answerType} sortKey="answer_type" {...sortProps} />
+              <TableHead className="text-right font-semibold">{strings.tags.answerValue}</TableHead>
+              <SortableHead label={strings.tags.draft} sortKey="is_draft" {...sortProps} />
+              <SortableHead label={strings.tags.lastEditor} sortKey="last_editor" {...sortProps} />
+              <SortableHead label={strings.tags.updated} sortKey="updated_at" {...sortProps} />
+              <SortableHead label={strings.tags.created} sortKey="created_at" {...sortProps} />
+              <SortableHead label={strings.tags.versions} sortKey="version_count" {...sortProps} />
+              <TableHead className="text-right font-semibold">{strings.common.actions}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sortedTags.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
-                  לא נמצאו תיוגים
+                  {strings.tags.noTags}
                 </TableCell>
               </TableRow>
             ) : (
@@ -123,65 +128,29 @@ export default function TagsTable({ tags, onEdit, onDelete, onViewHistory }: Pro
                   <TableCell className="max-w-[200px] truncate font-medium">{tag.question}</TableCell>
                   <TableCell>
                     <Badge variant={tag.answer_type === "cubes" ? "default" : "secondary"}>
-                      {tag.answer_type === "cubes" ? "קוביות" : "טקסט חופשי"}
+                      {tag.answer_type === "cubes" ? strings.tags.cubes : strings.tags.freeText}
                     </Badge>
                   </TableCell>
                   <TableCell className="max-w-[250px]">
-                    {tag.answer_type === "cubes" && tag.cubes ? (
-                      <div className="flex items-center gap-2">
-                        <CubesPieChart cubes={tag.cubes} />
-                        <div className="flex flex-wrap gap-1">
-                          {tag.cubes.map((c) => (
-                            <Badge key={c.cube_id} variant="outline" className="text-xs">
-                              {c.cube_name}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <span className="text-sm truncate block">{tag.free_text_content || "-"}</span>
-                    )}
+                    <TagAnswerCell tag={tag} />
                   </TableCell>
                   <TableCell>
                     <Badge variant={tag.is_draft ? "destructive" : "outline"} className="text-xs">
-                      {tag.is_draft ? "כן" : "לא"}
+                      {tag.is_draft ? strings.common.yes : strings.common.no}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm">{tag.last_editor}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{format(new Date(tag.updated_at), "dd/MM/yy HH:mm")}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{format(new Date(tag.created_at), "dd/MM/yy HH:mm")}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onViewHistory(tag.id)} title="היסטוריית גרסאות">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onViewHistory(tag.id)}>
                       <History className="h-4 w-4" />
-                      <span className="sr-only">היסטוריה</span>
+                      <span className="sr-only">{strings.common.history}</span>
                     </Button>
                     <Badge variant="secondary">{tag.version_count}</Badge>
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(tag.id)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>מחיקת תיוג</AlertDialogTitle>
-                            <AlertDialogDescription>האם אתה בטוח שברצונך למחוק תיוג זה? פעולה זו לא ניתנת לביטול.</AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>ביטול</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => onDelete(tag.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                              מחק
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
+                    <TagActionsCell tag={tag} onEdit={() => onEdit(tag.id)} onDelete={() => onDelete(tag.id)} />
                   </TableCell>
                 </TableRow>
               ))
