@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowRight, Save, Upload, Key, Type } from "lucide-react";
 import { strings } from "@/constants/strings";
+import { updateProfile } from "@/services/api";
 
 const PRESET_AVATARS = [
   "https://api.dicebear.com/7.x/avataaars/svg?seed=1",
@@ -178,15 +179,16 @@ export default function Settings() {
   const handleSaveProfile = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({ display_name: displayName, avatar_url: avatarUrl || null, font_size: fontSize })
-      .eq("user_id", user.id);
-    if (error) {
-      toast({ title: strings.common.error, description: error.message, variant: "destructive" });
-    } else {
+    try {
+      await updateProfile({
+        display_name: displayName,
+        avatar_url: avatarUrl || null,
+        font_size: fontSize,
+      });
       await refreshProfile();
       toast({ title: strings.settings.profileUpdated });
+    } catch (e: any) {
+      toast({ title: strings.common.error, description: e.message, variant: "destructive" });
     }
     setSaving(false);
   };
