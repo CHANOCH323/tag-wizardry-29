@@ -1,73 +1,37 @@
-# Welcome to your Lovable project
+# Tag Wizardry - מערכת ניהול תיוגים
 
-## Project info
+מערכת לניהול תיוגים עם תמיכה בקוביות וטקסט חופשי.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## מבנה הפרויקט
 
-## How can I edit this code?
+```
+tag-wizardry-29/
+├── client/          # צד לקוח - React + Vite + shadcn/ui
+├── server/          # צד שרת - FastAPI + MongoDB
+├── API_CONTRACT.md  # חוזה API בין לקוח לשרת
+└── README.md
+```
 
-There are several ways of editing your application.
+## הרצה
 
-**Use Lovable**
+### שרת (FastAPI + MongoDB)
+```bash
+cd server
+pip install -r requirements.txt
+# ודא ש-MongoDB רץ
+uvicorn main:app --reload --port 8000
+```
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### לקוח (React)
+```bash
+cd client
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+הלקוח ירוץ על `http://localhost:5173` ויתחבר לשרת ב-`http://localhost:8000/api`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## טכנולוגיות
 
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- **לקוח**: React, TypeScript, Vite, shadcn/ui, Tailwind CSS
+- **שרת**: FastAPI, MongoDB, JWT
