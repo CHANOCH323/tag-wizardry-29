@@ -180,7 +180,7 @@ export default function Index() {
         {loading ? (
           <div className="text-center py-12 text-muted-foreground">טוען...</div>
         ) : (
-          <TagsTable tags={tags} onEdit={handleEdit} onDelete={handleDelete} />
+          <TagsTable tags={tags} onEdit={handleEdit} onDelete={handleDelete} onViewHistory={handleViewHistory} />
         )}
       </div>
 
