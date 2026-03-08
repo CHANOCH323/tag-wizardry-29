@@ -5,6 +5,7 @@ import AppLayout from "@/components/AppLayout";
 import TagsTable, { TagRow } from "@/components/TagsTable";
 import TagsFilters, { TagFilters, emptyFilters } from "@/components/TagsFilters";
 import TagEditor from "@/components/TagEditor";
+import VersionHistory from "@/components/VersionHistory";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
