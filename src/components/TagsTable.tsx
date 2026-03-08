@@ -29,6 +29,7 @@ interface Props {
   tags: TagRow[];
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
+  onViewHistory: (id: string) => void;
 }
 
 export default function TagsTable({ tags, onEdit, onDelete }: Props) {
