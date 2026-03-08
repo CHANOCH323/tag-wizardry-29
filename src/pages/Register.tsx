@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus, Tag } from "lucide-react";
+import { strings } from "@/constants/strings";
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -20,7 +21,7 @@ export default function Register() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim() || !displayName.trim()) {
-      toast({ title: "שגיאה", description: "יש למלא את כל השדות", variant: "destructive" });
+      toast({ title: strings.common.error, description: strings.auth.fillAllFields, variant: "destructive" });
       return;
     }
     setLoading(true);
@@ -33,9 +34,9 @@ export default function Register() {
       },
     });
     if (error) {
-      toast({ title: "שגיאה בהרשמה", description: error.message, variant: "destructive" });
+      toast({ title: strings.auth.registerError, description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "נרשמת בהצלחה!", description: "ברוך הבא למערכת" });
+      toast({ title: strings.auth.registerSuccess, description: strings.auth.registerWelcome });
       navigate("/");
     }
     setLoading(false);
@@ -48,38 +49,36 @@ export default function Register() {
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
             <Tag className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold">הרשמה למערכת</CardTitle>
-          <CardDescription>צור חשבון חדש</CardDescription>
+          <CardTitle className="text-2xl font-bold">{strings.auth.registerTitle}</CardTitle>
+          <CardDescription>{strings.auth.registerSubtitle}</CardDescription>
         </CardHeader>
         <form onSubmit={handleRegister}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">אימייל</Label>
+              <Label htmlFor="email">{strings.auth.email}</Label>
               <Input id="email" type="email" placeholder="your@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required dir="ltr" className="text-left" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="username">שם משתמש</Label>
-              <Input id="username" placeholder="שם משתמש ייחודי" value={username} onChange={(e) => setUsername(e.target.value)} required />
+              <Label htmlFor="username">{strings.auth.username}</Label>
+              <Input id="username" placeholder={strings.auth.usernamePlaceholder} value={username} onChange={(e) => setUsername(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="displayName">שם תצוגה</Label>
-              <Input id="displayName" placeholder="השם שיוצג במערכת" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required />
+              <Label htmlFor="displayName">{strings.auth.displayName}</Label>
+              <Input id="displayName" placeholder={strings.auth.displayNamePlaceholder} value={displayName} onChange={(e) => setDisplayName(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">סיסמא</Label>
+              <Label htmlFor="password">{strings.auth.password}</Label>
               <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required dir="ltr" className="text-left" minLength={6} />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <Button type="submit" className="w-full gap-2" disabled={loading}>
               <UserPlus className="h-4 w-4" />
-              {loading ? "נרשם..." : "הרשם"}
+              {loading ? strings.auth.registering : strings.auth.register}
             </Button>
             <p className="text-sm text-muted-foreground">
-              יש לך חשבון?{" "}
-              <Link to="/login" className="text-primary font-medium hover:underline">
-                התחבר כאן
-              </Link>
+              {strings.auth.hasAccount}{" "}
+              <Link to="/login" className="text-primary font-medium hover:underline">{strings.auth.loginHere}</Link>
             </p>
           </CardFooter>
         </form>
