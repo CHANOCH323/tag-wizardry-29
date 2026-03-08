@@ -1,8 +1,9 @@
+import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Edit, Trash2, History } from "lucide-react";
+import { Edit, Trash2, History, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { format } from "date-fns";
 import CubesPieChart from "./CubesPieChart";
 
@@ -25,6 +26,9 @@ export interface TagRow {
   version_count: number;
 }
 
+type SortKey = "question" | "answer_type" | "is_draft" | "last_editor" | "updated_at" | "created_at" | "version_count";
+type SortDir = "asc" | "desc";
+
 interface Props {
   tags: TagRow[];
   onEdit: (id: string) => void;
@@ -32,7 +36,61 @@ interface Props {
   onViewHistory: (id: string) => void;
 }
 
+function SortableHead({ label, sortKey, currentKey, currentDir, onSort }: {
+  label: string;
+  sortKey: SortKey;
+  currentKey: SortKey | null;
+  currentDir: SortDir;
+  onSort: (key: SortKey) => void;
+}) {
+  const active = currentKey === sortKey;
+  return (
+    <TableHead
+      className="text-right font-semibold cursor-pointer select-none hover:bg-muted/30 transition-colors"
+      onClick={() => onSort(sortKey)}
+    >
+      <span className="inline-flex items-center gap-1">
+        {label}
+        {active ? (
+          currentDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+        ) : (
+          <ArrowUpDown className="h-3 w-3 opacity-30" />
+        )}
+      </span>
+    </TableHead>
+  );
+}
+
 export default function TagsTable({ tags, onEdit, onDelete, onViewHistory }: Props) {
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
+
+  const sortedTags = [...tags];
+  if (sortKey) {
+    sortedTags.sort((a, b) => {
+      let cmp = 0;
+      const va = a[sortKey];
+      const vb = b[sortKey];
+      if (typeof va === "string" && typeof vb === "string") {
+        cmp = va.localeCompare(vb, "he");
+      } else if (typeof va === "number" && typeof vb === "number") {
+        cmp = va - vb;
+      } else if (typeof va === "boolean" && typeof vb === "boolean") {
+        cmp = (va ? 1 : 0) - (vb ? 1 : 0);
+      }
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+  }
+
   return (
     <div className="rounded-lg border bg-card overflow-hidden">
       <div className="overflow-x-auto">
@@ -40,26 +98,26 @@ export default function TagsTable({ tags, onEdit, onDelete, onViewHistory }: Pro
           <TableHeader>
             <TableRow className="bg-muted/50">
               <TableHead className="text-right font-semibold">מזהה</TableHead>
-              <TableHead className="text-right font-semibold">שאלה</TableHead>
-              <TableHead className="text-right font-semibold">סוג תשובה</TableHead>
+              <SortableHead label="שאלה" sortKey="question" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
+              <SortableHead label="סוג תשובה" sortKey="answer_type" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
               <TableHead className="text-right font-semibold">ערך תשובה</TableHead>
-              <TableHead className="text-right font-semibold">טיוטה</TableHead>
-              <TableHead className="text-right font-semibold">עורך אחרון</TableHead>
-              <TableHead className="text-right font-semibold">עודכן</TableHead>
-              <TableHead className="text-right font-semibold">נוצר</TableHead>
-              <TableHead className="text-right font-semibold">גרסאות</TableHead>
+              <SortableHead label="טיוטה" sortKey="is_draft" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
+              <SortableHead label="עורך אחרון" sortKey="last_editor" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
+              <SortableHead label="עודכן" sortKey="updated_at" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
+              <SortableHead label="נוצר" sortKey="created_at" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
+              <SortableHead label="גרסאות" sortKey="version_count" currentKey={sortKey} currentDir={sortDir} onSort={handleSort} />
               <TableHead className="text-right font-semibold">פעולות</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tags.length === 0 ? (
+            {sortedTags.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
                   לא נמצאו תיוגים
                 </TableCell>
               </TableRow>
             ) : (
-              tags.map((tag) => (
+              sortedTags.map((tag) => (
                 <TableRow key={tag.id} className="hover:bg-muted/30 transition-colors">
                   <TableCell className="font-mono text-xs text-muted-foreground">{tag.id.slice(0, 8)}</TableCell>
                   <TableCell className="max-w-[200px] truncate font-medium">{tag.question}</TableCell>
