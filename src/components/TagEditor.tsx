@@ -80,7 +80,7 @@ export default function TagEditor({ open, onClose, editTagId, onSaved }: Props) 
         question: data.question,
         answer_type: data.answer_type,
         free_text_content: data.free_text_content || "",
-        cubes: (data.cubes as CubeEntry[] | null) || [],
+        cubes: (data.cubes as unknown as CubeEntry[] | null) || [],
         top_x: data.top_x || 3,
         total_weight_threshold: data.total_weight_threshold || 70,
         is_draft: data.is_draft,
