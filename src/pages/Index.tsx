@@ -9,8 +9,10 @@ import VersionHistory from "@/components/VersionHistory";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Download } from "lucide-react";
+import { Plus, Download, ChevronRight, ChevronLeft, ChevronsRight, ChevronsLeft } from "lucide-react";
 import * as XLSX from "xlsx";
+
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
 export default function Index() {
   const [tags, setTags] = useState<TagRow[]>([]);
