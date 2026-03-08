@@ -193,9 +193,47 @@ export default function Index() {
         {loading ? (
           <div className="text-center py-12 text-muted-foreground">טוען...</div>
         ) : (
-          <TagsTable tags={tags} onEdit={handleEdit} onDelete={handleDelete} onViewHistory={handleViewHistory} />
+          <TagsTable tags={paginatedTags} onEdit={handleEdit} onDelete={handleDelete} onViewHistory={handleViewHistory} />
+
+          {/* Pagination */}
+          {tags.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>שורות בעמוד:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                  className="rounded border bg-background px-2 py-1 text-sm"
+                >
+                  {PAGE_SIZE_OPTIONS.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+                <span className="mr-4">
+                  {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, tags.length)} מתוך {tags.length}
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage === 1} onClick={() => setCurrentPage(1)}>
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <span className="px-3 text-sm font-medium">
+                  עמוד {currentPage} מתוך {totalPages}
+                </span>
+                <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage === totalPages} onClick={() => setCurrentPage((p) => p + 1)}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage === totalPages} onClick={() => setCurrentPage(totalPages)}>
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
         )}
-      </div>
 
       <TagEditor
         open={editorOpen}
