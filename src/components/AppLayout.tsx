@@ -9,6 +9,7 @@ import { useTheme } from "@/hooks/use-theme";
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
 
   const fontSizeClass = profile?.font_size ? `font-size-${profile.font_size}` : "font-size-medium";
 
