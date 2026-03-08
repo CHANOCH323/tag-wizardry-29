@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -12,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowRight, Save, Upload, Key, Type } from "lucide-react";
 import { strings } from "@/constants/strings";
-import { updateProfile } from "@/services/api";
+import { updateProfile, updatePassword, uploadFile } from "@/services/api";
 
 const PRESET_AVATARS = [
   "https://api.dicebear.com/7.x/avataaars/svg?seed=1",
@@ -33,14 +32,13 @@ function ProfileCard({ displayName, setDisplayName, avatarUrl, setAvatarUrl, onS
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !userId) return;
-    const path = `${userId}/${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from("avatars").upload(path, file);
-    if (error) {
+    try {
+      const path = `${userId}/${Date.now()}-${file.name}`;
+      const result = await uploadFile("avatars", path, file);
+      setAvatarUrl(result.url);
+    } catch (error: any) {
       toast({ title: strings.settings.uploadError, description: error.message, variant: "destructive" });
-      return;
     }
-    const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
-    setAvatarUrl(publicUrl);
   };
 
   return (
@@ -130,13 +128,13 @@ function PasswordCard({ saving }: { saving: boolean }) {
       toast({ title: strings.common.error, description: strings.settings.passwordMinLength, variant: "destructive" });
       return;
     }
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    if (error) {
-      toast({ title: strings.common.error, description: error.message, variant: "destructive" });
-    } else {
+    try {
+      await updatePassword(newPassword);
       toast({ title: strings.settings.passwordChanged });
       setCurrentPassword("");
       setNewPassword("");
+    } catch (error: any) {
+      toast({ title: strings.common.error, description: error.message, variant: "destructive" });
     }
   };
 
