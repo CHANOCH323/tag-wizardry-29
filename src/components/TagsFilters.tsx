@@ -5,9 +5,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Search, Filter, X, CalendarIcon } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { strings } from "@/constants/strings";
+import { fetchCubes, fetchAllProfiles } from "@/services/api";
+import type { CubeDto, ProfileListItemDto } from "@/services/api.types";
 
 export interface TagFilters {
   questionSearch: string;
@@ -38,12 +39,12 @@ interface Props {
 
 export default function TagsFilters({ filters, onChange }: Props) {
   const [showFilters, setShowFilters] = useState(false);
-  const [cubes, setCubes] = useState<{ cube_id: string; name: string }[]>([]);
-  const [users, setUsers] = useState<{ user_id: string; display_name: string }[]>([]);
+  const [cubes, setCubes] = useState<CubeDto[]>([]);
+  const [users, setUsers] = useState<ProfileListItemDto[]>([]);
 
   useEffect(() => {
-    supabase.from("cubes").select("cube_id, name").then(({ data }) => data && setCubes(data));
-    supabase.from("profiles").select("user_id, display_name").then(({ data }) => data && setUsers(data));
+    fetchCubes().then(setCubes).catch(() => {});
+    fetchAllProfiles().then(setUsers).catch(() => {});
   }, []);
 
   const update = (key: keyof TagFilters, value: any) => onChange({ ...filters, [key]: value });

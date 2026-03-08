@@ -6,31 +6,25 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Save } from "lucide-react";
 import { strings } from "@/constants/strings";
 import CubesEditor from "@/components/CubesEditor";
+import { fetchCubes, fetchLatestVersion, saveTag } from "@/services/api";
+import type { CubeEntryDto, CubeDto } from "@/services/api.types";
 
-interface CubeEntry {
-  cube_id: string;
-  cube_name: string;
-  weight: number;
-}
-
-interface TagData {
+interface TagFormData {
   id?: string;
   question: string;
   answer_type: "cubes" | "free_text";
   free_text_content: string;
-  cubes: CubeEntry[];
+  cubes: CubeEntryDto[];
   top_x: number;
   total_weight_threshold: number;
   is_draft: boolean;
 }
 
-const emptyTag: TagData = {
+const emptyTag: TagFormData = {
   question: "",
   answer_type: "cubes",
   free_text_content: "",
@@ -48,15 +42,14 @@ interface Props {
 }
 
 export default function TagEditor({ open, onClose, editTagId, onSaved }: Props) {
-  const [form, setForm] = useState<TagData>({ ...emptyTag });
-  const [availableCubes, setAvailableCubes] = useState<{ cube_id: string; name: string }[]>([]);
+  const [form, setForm] = useState<TagFormData>({ ...emptyTag });
+  const [availableCubes, setAvailableCubes] = useState<CubeDto[]>([]);
   const [saving, setSaving] = useState(false);
-  const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     if (open) {
-      supabase.from("cubes").select("*").then(({ data }) => data && setAvailableCubes(data));
+      fetchCubes().then(setAvailableCubes).catch(() => {});
       if (editTagId) {
         loadTag(editTagId);
       } else {
@@ -66,24 +59,20 @@ export default function TagEditor({ open, onClose, editTagId, onSaved }: Props) 
   }, [open, editTagId]);
 
   const loadTag = async (tagId: string) => {
-    const { data } = await supabase
-      .from("tag_versions")
-      .select("*")
-      .eq("tag_id", tagId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
-    if (data) {
+    try {
+      const data = await fetchLatestVersion(tagId);
       setForm({
         id: tagId,
         question: data.question,
         answer_type: data.answer_type,
         free_text_content: data.free_text_content || "",
-        cubes: (data.cubes as unknown as CubeEntry[] | null) || [],
+        cubes: data.cubes || [],
         top_x: data.top_x || 3,
         total_weight_threshold: data.total_weight_threshold || 70,
         is_draft: data.is_draft,
       });
+    } catch (e: any) {
+      toast({ title: strings.common.error, description: e.message, variant: "destructive" });
     }
   };
 
@@ -106,50 +95,18 @@ export default function TagEditor({ open, onClose, editTagId, onSaved }: Props) 
       toast({ title: strings.common.error, description: err, variant: "destructive" });
       return;
     }
-    if (!user) return;
     setSaving(true);
-
     try {
-      let tagId = form.id;
-      const changedFields: string[] = [];
-
-      if (!tagId) {
-        const { data, error } = await supabase.from("tags").insert({}).select("id").single();
-        if (error) throw error;
-        tagId = data.id;
-        changedFields.push("question", "answer");
-      } else {
-        const { data: prev } = await supabase
-          .from("tag_versions")
-          .select("question, answer_type, cubes, free_text_content")
-          .eq("tag_id", tagId)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single();
-        if (prev) {
-          if (prev.question !== form.question) changedFields.push("question");
-          if (prev.answer_type !== form.answer_type || JSON.stringify(prev.cubes) !== JSON.stringify(form.cubes) || prev.free_text_content !== form.free_text_content) {
-            changedFields.push("answer");
-          }
-        }
-      }
-
-      const { error: vError } = await supabase.from("tag_versions").insert({
-        tag_id: tagId!,
-        created_by: user.id,
+      await saveTag({
+        tag_id: form.id || null,
         question: form.question,
         answer_type: form.answer_type,
-        free_text_content: form.answer_type === "free_text" ? form.free_text_content : null,
-        cubes: form.answer_type === "cubes" ? form.cubes as any : null,
-        top_x: form.answer_type === "cubes" ? form.top_x : null,
-        total_weight_threshold: form.answer_type === "cubes" ? form.total_weight_threshold : null,
+        free_text_content: form.free_text_content,
+        cubes: form.cubes,
+        top_x: form.top_x,
+        total_weight_threshold: form.total_weight_threshold,
         is_draft: form.is_draft,
-        changed_fields: changedFields,
       });
-      if (vError) throw vError;
-
-      await supabase.from("tags").update({ updated_at: new Date().toISOString() }).eq("id", tagId!);
-
       toast({ title: strings.tagEditor.savedSuccess });
       onSaved();
       onClose();
@@ -159,7 +116,7 @@ export default function TagEditor({ open, onClose, editTagId, onSaved }: Props) 
     setSaving(false);
   };
 
-  const updateForm = (partial: Partial<TagData>) => setForm({ ...form, ...partial });
+  const updateForm = (partial: Partial<TagFormData>) => setForm({ ...form, ...partial });
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>

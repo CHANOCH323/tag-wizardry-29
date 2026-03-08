@@ -8,34 +8,16 @@ import CubesPieChart from "./CubesPieChart";
 import SortableHead, { SortDir, SortKey } from "./SortableHead";
 import DeleteTagDialog from "./DeleteTagDialog";
 import { strings } from "@/constants/strings";
-
-interface CubeEntry {
-  cube_id: string;
-  cube_name: string;
-  weight: number;
-}
-
-export interface TagRow {
-  id: string;
-  question: string;
-  answer_type: "cubes" | "free_text";
-  cubes: CubeEntry[] | null;
-  free_text_content: string | null;
-  is_draft: boolean;
-  last_editor: string;
-  updated_at: string;
-  created_at: string;
-  version_count: number;
-}
+import type { TagDto } from "@/services/api.types";
 
 interface Props {
-  tags: TagRow[];
+  tags: TagDto[];
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   onViewHistory: (id: string) => void;
 }
 
-function TagAnswerCell({ tag }: { tag: TagRow }) {
+function TagAnswerCell({ tag }: { tag: TagDto }) {
   if (tag.answer_type === "cubes" && tag.cubes) {
     return (
       <div className="flex items-center gap-2">
@@ -53,7 +35,7 @@ function TagAnswerCell({ tag }: { tag: TagRow }) {
   return <span className="text-sm truncate block">{tag.free_text_content || "-"}</span>;
 }
 
-function TagActionsCell({ tag, onEdit, onDelete }: { tag: TagRow; onEdit: () => void; onDelete: () => void }) {
+function TagActionsCell({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
   return (
     <div className="flex gap-1">
       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onEdit}>
@@ -81,8 +63,8 @@ export default function TagsTable({ tags, onEdit, onDelete, onViewHistory }: Pro
   if (sortKey) {
     sortedTags.sort((a, b) => {
       let cmp = 0;
-      const va = a[sortKey];
-      const vb = b[sortKey];
+      const va = (a as any)[sortKey];
+      const vb = (b as any)[sortKey];
       if (typeof va === "string" && typeof vb === "string") {
         cmp = va.localeCompare(vb, "he");
       } else if (typeof va === "number" && typeof vb === "number") {
@@ -150,7 +132,7 @@ export default function TagsTable({ tags, onEdit, onDelete, onViewHistory }: Pro
                     <Badge variant="secondary">{tag.version_count}</Badge>
                   </TableCell>
                   <TableCell>
-                    <TagActionsCell tag={tag} onEdit={() => onEdit(tag.id)} onDelete={() => onDelete(tag.id)} />
+                    <TagActionsCell onEdit={() => onEdit(tag.id)} onDelete={() => onDelete(tag.id)} />
                   </TableCell>
                 </TableRow>
               ))

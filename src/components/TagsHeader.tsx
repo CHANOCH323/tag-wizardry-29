@@ -2,21 +2,21 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Download } from "lucide-react";
 import { strings } from "@/constants/strings";
-import type { TagRow } from "@/components/TagsTable";
+import type { TagDto } from "@/services/api.types";
 import * as XLSX from "xlsx";
 
 interface Props {
   count: number;
-  tags: TagRow[];
+  tags: TagDto[];
   onAdd: () => void;
 }
 
-function exportToExcel(tags: TagRow[]) {
+function exportToExcel(tags: TagDto[]) {
   const data = tags.map((t) => ({
     [strings.export.id]: t.id.slice(0, 8),
     [strings.export.question]: t.question,
     [strings.export.answerType]: t.answer_type === "cubes" ? strings.tags.cubes : strings.tags.freeText,
-    [strings.export.answerValue]: t.answer_type === "cubes" ? t.cubes?.map((c: any) => c.cube_name).join(", ") : t.free_text_content,
+    [strings.export.answerValue]: t.answer_type === "cubes" ? t.cubes?.map((c) => c.cube_name).join(", ") : t.free_text_content,
     [strings.export.draft]: t.is_draft ? strings.common.yes : strings.common.no,
     [strings.export.lastEditor]: t.last_editor,
     [strings.export.updatedAt]: t.updated_at,

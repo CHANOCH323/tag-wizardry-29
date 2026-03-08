@@ -4,32 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { History, ChevronDown, ChevronUp, GitCompare } from "lucide-react";
 import CubesPieChart from "./CubesPieChart";
 import { strings } from "@/constants/strings";
-
-interface CubeEntry {
-  cube_id: string;
-  cube_name: string;
-  weight: number;
-}
-
-interface Version {
-  id: string;
-  question: string;
-  answer_type: "cubes" | "free_text";
-  cubes: CubeEntry[] | null;
-  free_text_content: string | null;
-  top_x: number | null;
-  total_weight_threshold: number | null;
-  is_draft: boolean;
-  changed_fields: string[] | null;
-  created_at: string;
-  created_by: string;
-  editor_name: string;
-}
+import { fetchTagVersions } from "@/services/api";
+import type { VersionDto, CubeEntryDto } from "@/services/api.types";
 
 interface Props {
   open: boolean;
@@ -37,7 +17,7 @@ interface Props {
   tagId: string | null;
 }
 
-function VersionDetail({ version }: { version: Version }) {
+function VersionDetail({ version }: { version: VersionDto }) {
   const s = strings.versionHistory;
   return (
     <div className="space-y-3 text-sm">
@@ -93,7 +73,7 @@ function VersionDetail({ version }: { version: Version }) {
   );
 }
 
-function VersionCompare({ a, b, onBack }: { a: Version; b: Version; onBack: () => void }) {
+function VersionCompare({ a, b, onBack }: { a: VersionDto; b: VersionDto; onBack: () => void }) {
   const s = strings.versionHistory;
   const diffs: string[] = [];
   if (a.question !== b.question) diffs.push(s.questionField);
@@ -113,7 +93,6 @@ function VersionCompare({ a, b, onBack }: { a: Version; b: Version; onBack: () =
         </h3>
         <Button variant="outline" size="sm" onClick={onBack}>{s.backToList}</Button>
       </div>
-
       <div className="grid grid-cols-2 gap-4">
         {[a, b].map((v) => (
           <div key={v.id} className="rounded-lg border p-3 bg-muted/20">
@@ -124,7 +103,6 @@ function VersionCompare({ a, b, onBack }: { a: Version; b: Version; onBack: () =
           </div>
         ))}
       </div>
-
       <div className="rounded-lg border p-3 space-y-2">
         <h4 className="text-sm font-semibold">{s.differences}</h4>
         {diffs.length > 0 ? (
@@ -140,7 +118,7 @@ function VersionCompare({ a, b, onBack }: { a: Version; b: Version; onBack: () =
 }
 
 function VersionListItem({ version, index, total, isExpanded, isSelected, onToggleExpand, onToggleCompare }: {
-  version: Version; index: number; total: number; isExpanded: boolean; isSelected: boolean;
+  version: VersionDto; index: number; total: number; isExpanded: boolean; isSelected: boolean;
   onToggleExpand: () => void; onToggleCompare: () => void;
 }) {
   const s = strings.versionHistory;
@@ -180,34 +158,27 @@ function VersionListItem({ version, index, total, isExpanded, isSelected, onTogg
 }
 
 export default function VersionHistory({ open, onClose, tagId }: Props) {
-  const [versions, setVersions] = useState<Version[]>([]);
+  const [versions, setVersions] = useState<VersionDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [compareIds, setCompareIds] = useState<[string | null, string | null]>([null, null]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     if (open && tagId) {
-      fetchVersions(tagId);
+      loadVersions(tagId);
       setCompareIds([null, null]);
       setExpandedId(null);
     }
   }, [open, tagId]);
 
-  const fetchVersions = async (id: string) => {
+  const loadVersions = async (id: string) => {
     setLoading(true);
-    const { data } = await supabase.from("tag_versions").select("*").eq("tag_id", id).order("created_at", { ascending: false });
-    if (!data) { setLoading(false); return; }
-
-    const userIds = [...new Set(data.map((v) => v.created_by))];
-    const { data: profiles } = await supabase.from("profiles").select("user_id, display_name").in("user_id", userIds);
-    const profileMap = new Map(profiles?.map((p) => [p.user_id, p.display_name]) || []);
-
-    setVersions(data.map((v) => ({
-      ...v,
-      answer_type: v.answer_type as "cubes" | "free_text",
-      cubes: v.cubes as unknown as CubeEntry[] | null,
-      editor_name: profileMap.get(v.created_by) || strings.common.unknown,
-    })));
+    try {
+      const data = await fetchTagVersions(id);
+      setVersions(data);
+    } catch {
+      setVersions([]);
+    }
     setLoading(false);
   };
 
