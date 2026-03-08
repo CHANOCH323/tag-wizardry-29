@@ -2,7 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, History } from "lucide-react";
 import { format } from "date-fns";
 import CubesPieChart from "./CubesPieChart";
 
@@ -29,9 +29,10 @@ interface Props {
   tags: TagRow[];
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
+  onViewHistory: (id: string) => void;
 }
 
-export default function TagsTable({ tags, onEdit, onDelete }: Props) {
+export default function TagsTable({ tags, onEdit, onDelete, onViewHistory }: Props) {
   return (
     <div className="rounded-lg border bg-card overflow-hidden">
       <div className="overflow-x-auto">
@@ -92,6 +93,10 @@ export default function TagsTable({ tags, onEdit, onDelete }: Props) {
                   <TableCell className="text-sm text-muted-foreground">{format(new Date(tag.updated_at), "dd/MM/yy HH:mm")}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{format(new Date(tag.created_at), "dd/MM/yy HH:mm")}</TableCell>
                   <TableCell>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onViewHistory(tag.id)} title="היסטוריית גרסאות">
+                      <History className="h-4 w-4" />
+                      <span className="sr-only">היסטוריה</span>
+                    </Button>
                     <Badge variant="secondary">{tag.version_count}</Badge>
                   </TableCell>
                   <TableCell>

@@ -5,6 +5,7 @@ import AppLayout from "@/components/AppLayout";
 import TagsTable, { TagRow } from "@/components/TagsTable";
 import TagsFilters, { TagFilters, emptyFilters } from "@/components/TagsFilters";
 import TagEditor from "@/components/TagEditor";
+import VersionHistory from "@/components/VersionHistory";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +18,8 @@ export default function Index() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editTagId, setEditTagId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyTagId, setHistoryTagId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchTags = useCallback(async () => {
@@ -118,6 +121,11 @@ export default function Index() {
     fetchTags();
   };
 
+  const handleViewHistory = (id: string) => {
+    setHistoryTagId(id);
+    setHistoryOpen(true);
+  };
+
   const handleEdit = (id: string) => {
     setEditTagId(id);
     setEditorOpen(true);
@@ -172,7 +180,7 @@ export default function Index() {
         {loading ? (
           <div className="text-center py-12 text-muted-foreground">טוען...</div>
         ) : (
-          <TagsTable tags={tags} onEdit={handleEdit} onDelete={handleDelete} />
+          <TagsTable tags={tags} onEdit={handleEdit} onDelete={handleDelete} onViewHistory={handleViewHistory} />
         )}
       </div>
 
@@ -181,6 +189,12 @@ export default function Index() {
         onClose={() => { setEditorOpen(false); setEditTagId(null); }}
         editTagId={editTagId}
         onSaved={fetchTags}
+      />
+
+      <VersionHistory
+        open={historyOpen}
+        onClose={() => { setHistoryOpen(false); setHistoryTagId(null); }}
+        tagId={historyTagId}
       />
     </AppLayout>
   );
