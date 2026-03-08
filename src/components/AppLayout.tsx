@@ -1,9 +1,10 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { LogOut, Settings, Tag } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { LogOut, Settings, Tag, Moon, Sun } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "@/hooks/use-theme";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { profile, signOut } = useAuth();
