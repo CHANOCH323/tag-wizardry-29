@@ -1,13 +1,15 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { LogOut, Settings, Tag } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { LogOut, Settings, Tag, Moon, Sun } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "@/hooks/use-theme";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
 
   const fontSizeClass = profile?.font_size ? `font-size-${profile.font_size}` : "font-size-medium";
 
@@ -34,10 +36,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-48">
+              <DropdownMenuItem onClick={toggleTheme} className="gap-2 cursor-pointer">
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                {theme === "dark" ? "מצב בהיר" : "מצב כהה"}
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate("/settings")} className="gap-2 cursor-pointer">
                 <Settings className="h-4 w-4" />
                 הגדרות
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={signOut} className="gap-2 cursor-pointer text-destructive">
                 <LogOut className="h-4 w-4" />
                 התנתק
