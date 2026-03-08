@@ -18,6 +18,8 @@ export default function Index() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editTagId, setEditTagId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyTagId, setHistoryTagId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchTags = useCallback(async () => {
