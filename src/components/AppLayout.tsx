@@ -36,10 +36,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-48">
+              <DropdownMenuItem onClick={toggleTheme} className="gap-2 cursor-pointer">
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                {theme === "dark" ? "מצב בהיר" : "מצב כהה"}
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate("/settings")} className="gap-2 cursor-pointer">
                 <Settings className="h-4 w-4" />
                 הגדרות
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={signOut} className="gap-2 cursor-pointer text-destructive">
                 <LogOut className="h-4 w-4" />
                 התנתק
