@@ -9,8 +9,10 @@ import VersionHistory from "@/components/VersionHistory";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Download } from "lucide-react";
+import { Plus, Download, ChevronRight, ChevronLeft, ChevronsRight, ChevronsLeft } from "lucide-react";
 import * as XLSX from "xlsx";
+
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
 export default function Index() {
   const [tags, setTags] = useState<TagRow[]>([]);
@@ -20,6 +22,8 @@ export default function Index() {
   const [loading, setLoading] = useState(true);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyTagId, setHistoryTagId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const { toast } = useToast();
 
   const fetchTags = useCallback(async () => {
@@ -111,9 +115,18 @@ export default function Index() {
     setLoading(false);
   }, [filters]);
 
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
+
   useEffect(() => {
     fetchTags();
   }, [fetchTags]);
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(tags.length / pageSize));
+  const paginatedTags = tags.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const handleDelete = async (id: string) => {
     await supabase.from("tags").update({ is_deleted: true }).eq("id", id);
@@ -180,7 +193,46 @@ export default function Index() {
         {loading ? (
           <div className="text-center py-12 text-muted-foreground">טוען...</div>
         ) : (
-          <TagsTable tags={tags} onEdit={handleEdit} onDelete={handleDelete} onViewHistory={handleViewHistory} />
+          <>
+            <TagsTable tags={paginatedTags} onEdit={handleEdit} onDelete={handleDelete} onViewHistory={handleViewHistory} />
+
+            {tags.length > 0 && (
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>שורות בעמוד:</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                    className="rounded border bg-background px-2 py-1 text-sm"
+                  >
+                    {PAGE_SIZE_OPTIONS.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                  <span className="mr-4">
+                    {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, tags.length)} מתוך {tags.length}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage === 1} onClick={() => setCurrentPage(1)}>
+                    <ChevronsRight className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <span className="px-3 text-sm font-medium">
+                    עמוד {currentPage} מתוך {totalPages}
+                  </span>
+                  <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage === totalPages} onClick={() => setCurrentPage((p) => p + 1)}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage === totalPages} onClick={() => setCurrentPage(totalPages)}>
+                    <ChevronsLeft className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
