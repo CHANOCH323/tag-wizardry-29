@@ -121,6 +121,11 @@ export default function Index() {
     fetchTags();
   };
 
+  const handleViewHistory = (id: string) => {
+    setHistoryTagId(id);
+    setHistoryOpen(true);
+  };
+
   const handleEdit = (id: string) => {
     setEditTagId(id);
     setEditorOpen(true);
