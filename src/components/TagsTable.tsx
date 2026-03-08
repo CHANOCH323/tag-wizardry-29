@@ -32,7 +32,7 @@ interface Props {
   onViewHistory: (id: string) => void;
 }
 
-export default function TagsTable({ tags, onEdit, onDelete }: Props) {
+export default function TagsTable({ tags, onEdit, onDelete, onViewHistory }: Props) {
   return (
     <div className="rounded-lg border bg-card overflow-hidden">
       <div className="overflow-x-auto">
