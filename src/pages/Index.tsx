@@ -234,6 +234,7 @@ export default function Index() {
             )}
           </>
         )}
+      </div>
 
       <TagEditor
         open={editorOpen}
