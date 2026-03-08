@@ -190,6 +190,12 @@ export default function Index() {
         editTagId={editTagId}
         onSaved={fetchTags}
       />
+
+      <VersionHistory
+        open={historyOpen}
+        onClose={() => { setHistoryOpen(false); setHistoryTagId(null); }}
+        tagId={historyTagId}
+      />
     </AppLayout>
   );
 }
