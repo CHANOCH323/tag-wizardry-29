@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,9 +77,19 @@ export default function CubesEditor({ cubes, availableCubes, topX, weightThresho
             <Button variant="ghost" size="sm" onClick={distributeEvenly}>{strings.tagEditor.distributeEvenly}</Button>
           </div>
           <div className="space-y-3">
-            {cubes.map((cube) => (
-              <CubeWeightRow key={cube.cube_id} cube={cube} onRemove={removeCube} onWeightChange={setCubeWeight} />
-            ))}
+            {cubes.map((cube) => {
+              const othersTotal = cubes.filter((c) => c.cube_id !== cube.cube_id).reduce((s, c) => s + c.weight, 0);
+              const maxWeight = Math.round(100 - othersTotal);
+              return (
+                <CubeWeightRow
+                  key={cube.cube_id}
+                  cube={cube}
+                  maxWeight={Math.max(0, maxWeight)}
+                  onRemove={removeCube}
+                  onWeightChange={setCubeWeight}
+                />
+              );
+            })}
           </div>
         </>
       )}
@@ -98,25 +108,47 @@ export default function CubesEditor({ cubes, availableCubes, topX, weightThresho
   );
 }
 
-function CubeWeightRow({ cube, onRemove, onWeightChange }: { cube: { cube_id: string; cube_name: string; weight: number }; onRemove: (id: string) => void; onWeightChange: (id: string, w: number) => void }) {
+function CubeWeightRow({
+  cube,
+  maxWeight,
+  onRemove,
+  onWeightChange,
+}: {
+  cube: { cube_id: string; cube_name: string; weight: number };
+  maxWeight: number;
+  onRemove: (id: string) => void;
+  onWeightChange: (id: string, w: number) => void;
+}) {
+  useEffect(() => {
+    if (cube.weight > maxWeight) onWeightChange(cube.cube_id, maxWeight);
+  }, [maxWeight, cube.cube_id, cube.weight, onWeightChange]);
+  const val = Math.min(cube.weight, maxWeight);
   return (
     <div className="flex items-center gap-3 rounded-md border p-3 bg-secondary/30">
       <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => onRemove(cube.cube_id)}>
         <X className="h-3 w-3" />
       </Button>
-      <Badge variant="secondary" className="shrink-0">{cube.cube_name}</Badge>
-      <div className="flex-1">
-        <Slider value={[cube.weight]} onValueChange={([v]) => onWeightChange(cube.cube_id, v)} max={100} step={1} />
+      <Badge variant="secondary" className="shrink-0 min-w-[80px]">{cube.cube_name}</Badge>
+      <span className="text-xs text-muted-foreground shrink-0 w-12">
+        {strings.tagEditor.weightRange(0, maxWeight)}
+      </span>
+      <div className="flex-1 min-w-0">
+        <Slider
+          value={[val]}
+          onValueChange={([v]) => onWeightChange(cube.cube_id, Math.min(maxWeight, Math.max(0, v)))}
+          max={maxWeight}
+          step={1}
+        />
       </div>
       <Input
         type="number"
-        value={cube.weight}
-        onChange={(e) => onWeightChange(cube.cube_id, Math.min(100, Math.max(0, Number(e.target.value))))}
-        className="w-16 text-center"
+        value={val}
+        onChange={(e) => onWeightChange(cube.cube_id, Math.min(maxWeight, Math.max(0, Number(e.target.value))))}
+        className="w-14 text-center shrink-0"
         min={0}
-        max={100}
+        max={maxWeight}
       />
-      <span className="text-sm text-muted-foreground">{strings.common.percent}</span>
+      <span className="text-sm text-muted-foreground shrink-0">{strings.common.percent}</span>
     </div>
   );
 }

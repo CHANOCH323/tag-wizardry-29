@@ -117,9 +117,22 @@ function VersionCompare({ a, b, onBack }: { a: VersionDto; b: VersionDto; onBack
   );
 }
 
-function VersionListItem({ version, index, total, isExpanded, isSelected, onToggleExpand, onToggleCompare }: {
-  version: VersionDto; index: number; total: number; isExpanded: boolean; isSelected: boolean;
-  onToggleExpand: () => void; onToggleCompare: () => void;
+function VersionListItem({
+  version,
+  index,
+  total,
+  isExpanded,
+  isSelected,
+  onToggleExpand,
+  onToggleCompare,
+}: {
+  version: VersionDto;
+  index: number;
+  total: number;
+  isExpanded: boolean;
+  isSelected: boolean;
+  onToggleExpand: () => void;
+  onToggleCompare: () => void;
 }) {
   const s = strings.versionHistory;
   return (

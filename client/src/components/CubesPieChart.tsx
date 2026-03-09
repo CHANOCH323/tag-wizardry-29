@@ -18,7 +18,7 @@ export default function CubesPieChart({ cubes }: { cubes: CubeData[] }) {
   const data = cubes.map((c) => ({ name: c.cube_name, value: c.weight }));
 
   return (
-    <div className="w-24 h-24">
+    <div className="w-24 h-24 relative z-0 shrink-0">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={40} innerRadius={15}>
@@ -28,7 +28,8 @@ export default function CubesPieChart({ cubes }: { cubes: CubeData[] }) {
           </Pie>
           <Tooltip
             formatter={(value: number, name: string) => [`${value}%`, name]}
-            contentStyle={{ direction: "rtl", fontSize: "12px" }}
+            contentStyle={{ direction: "rtl", fontSize: "12px", zIndex: 9999 }}
+            wrapperStyle={{ zIndex: 9999 }}
           />
         </PieChart>
       </ResponsiveContainer>

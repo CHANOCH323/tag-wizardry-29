@@ -11,7 +11,7 @@ import { Save } from "lucide-react";
 import { strings } from "@/constants/strings";
 import CubesEditor from "@/components/CubesEditor";
 import { fetchCubes, fetchLatestVersion, saveTag } from "@/services/api";
-import type { CubeEntryDto, CubeDto } from "@/services/api.types";
+import type { CubeEntryDto, CubeDto, VersionDto } from "@/services/api.types";
 
 interface TagFormData {
   id?: string;
@@ -38,10 +38,11 @@ interface Props {
   open: boolean;
   onClose: () => void;
   editTagId?: string | null;
+  initialVersion?: VersionDto | null;
   onSaved: () => void;
 }
 
-export default function TagEditor({ open, onClose, editTagId, onSaved }: Props) {
+export default function TagEditor({ open, onClose, editTagId, initialVersion, onSaved }: Props) {
   const [form, setForm] = useState<TagFormData>({ ...emptyTag });
   const [availableCubes, setAvailableCubes] = useState<CubeDto[]>([]);
   const [saving, setSaving] = useState(false);
@@ -50,13 +51,24 @@ export default function TagEditor({ open, onClose, editTagId, onSaved }: Props) 
   useEffect(() => {
     if (open) {
       fetchCubes().then(setAvailableCubes).catch(() => {});
-      if (editTagId) {
+      if (initialVersion && editTagId) {
+        setForm({
+          id: editTagId,
+          question: initialVersion.question,
+          answer_type: initialVersion.answer_type,
+          free_text_content: initialVersion.free_text_content || "",
+          cubes: initialVersion.cubes || [],
+          top_x: initialVersion.top_x || 3,
+          total_weight_threshold: initialVersion.total_weight_threshold || 70,
+          is_draft: initialVersion.is_draft,
+        });
+      } else if (editTagId) {
         loadTag(editTagId);
       } else {
         setForm({ ...emptyTag });
       }
     }
-  }, [open, editTagId]);
+  }, [open, editTagId, initialVersion]);
 
   const loadTag = async (tagId: string) => {
     try {

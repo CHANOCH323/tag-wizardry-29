@@ -7,14 +7,13 @@ from server.models.schemas import (
     VersionDto,
 )
 from server.requests.tag_repository import (
+    append_version,
     create_tag,
-    create_tag_version,
     find_tag_by_id,
-    get_latest_version,
-    get_versions_by_tag,
+    get_latest_version_doc,
+    get_versions_list,
     list_tags,
     soft_delete_tag,
-    update_tag_updated_at,
 )
 from server.requests.user_repository import find_user_by_id
 
@@ -38,6 +37,23 @@ def _to_cube_entries(cubes: list | None) -> list[CubeEntryDto] | None:
     ]
 
 
+def _version_to_dto(v: dict, editor_name: str | None) -> VersionDto:
+    return VersionDto(
+        id=v.get("id", v.get("_id", "")),
+        question=v["question"],
+        answer_type=v["answer_type"],
+        cubes=_to_cube_entries(v.get("cubes")),
+        free_text_content=v.get("free_text_content"),
+        top_x=v.get("top_x"),
+        total_weight_threshold=v.get("total_weight_threshold"),
+        is_draft=v.get("is_draft", False),
+        changed_fields=v.get("changed_fields"),
+        created_at=v["created_at"],
+        created_by=v["created_by"],
+        editor_name=editor_name,
+    )
+
+
 async def _get_editor_name(user_id: str) -> str | None:
     user = await find_user_by_id(user_id)
     return user.get("display_name") if user else None
@@ -45,30 +61,13 @@ async def _get_editor_name(user_id: str) -> str | None:
 
 async def list_tags_with_latest() -> list[TagDto]:
     tags = await list_tags()
-    if not tags:
-        return []
-
-    tag_ids = [t["_id"] for t in tags]
-    db = await get_database()
-    cursor = db["tag_versions"].find({"tag_id": {"$in": tag_ids}}).sort("created_at", -1)
-    all_versions = [v async for v in cursor]
-
-    versions_by_tag: dict[str, list] = {}
-    for v in all_versions:
-        tid = v["tag_id"]
-        if tid not in versions_by_tag:
-            versions_by_tag[tid] = []
-        versions_by_tag[tid].append(v)
-
     result = []
     for tag in tags:
-        tag_versions = versions_by_tag.get(tag["_id"], [])
-        latest = tag_versions[0] if tag_versions else None
-        if not latest:
+        versions = tag.get("versions", [])
+        if not versions:
             continue
-
+        latest = versions[0]
         editor_name = await _get_editor_name(latest["created_by"])
-
         result.append(
             TagDto(
                 id=tag["_id"],
@@ -80,10 +79,9 @@ async def list_tags_with_latest() -> list[TagDto]:
                 last_editor=editor_name,
                 updated_at=tag["updated_at"],
                 created_at=tag["created_at"],
-                version_count=len(tag_versions),
+                version_count=len(versions),
             )
         )
-
     return result
 
 
@@ -118,7 +116,8 @@ async def save_tag(user_id: str, req: SaveTagRequest) -> tuple[bool, str]:
         tag = await find_tag_by_id(tag_id)
         if not tag:
             raise TagsError("Tag not found", 404)
-        prev = await get_latest_version(tag_id)
+        versions = tag.get("versions", [])
+        prev = versions[0] if versions else None
         if prev:
             if prev["question"] != req.question:
                 changed_fields.append("question")
@@ -139,7 +138,7 @@ async def save_tag(user_id: str, req: SaveTagRequest) -> tuple[bool, str]:
     if req.answer_type == "cubes" and req.cubes:
         cubes_data = [c.model_dump() for c in req.cubes]
 
-    await create_tag_version(
+    await append_version(
         tag_id=tag_id,
         created_by=user_id,
         question=req.question,
@@ -152,7 +151,6 @@ async def save_tag(user_id: str, req: SaveTagRequest) -> tuple[bool, str]:
         changed_fields=changed_fields,
     )
 
-    await update_tag_updated_at(tag_id)
     return True, tag_id
 
 
@@ -168,26 +166,11 @@ async def get_tag_versions(tag_id: str) -> list[VersionDto]:
     if not tag:
         raise TagsError("Tag not found", 404)
 
-    versions = await get_versions_by_tag(tag_id)
+    versions = await get_versions_list(tag_id)
     result = []
     for v in versions:
         editor_name = await _get_editor_name(v["created_by"])
-        result.append(
-            VersionDto(
-                id=v["_id"],
-                question=v["question"],
-                answer_type=v["answer_type"],
-                cubes=_to_cube_entries(v.get("cubes")),
-                free_text_content=v.get("free_text_content"),
-                top_x=v.get("top_x"),
-                total_weight_threshold=v.get("total_weight_threshold"),
-                is_draft=v.get("is_draft", False),
-                changed_fields=v.get("changed_fields"),
-                created_at=v["created_at"],
-                created_by=v["created_by"],
-                editor_name=editor_name,
-            )
-        )
+        result.append(_version_to_dto(v, editor_name))
     return result
 
 
@@ -196,22 +179,9 @@ async def get_latest_tag_version(tag_id: str) -> VersionDto:
     if not tag:
         raise TagsError("Tag not found", 404)
 
-    v = await get_latest_version(tag_id)
+    v = await get_latest_version_doc(tag_id)
     if not v:
         raise TagsError("No versions found", 404)
 
     editor_name = await _get_editor_name(v["created_by"])
-    return VersionDto(
-        id=v["_id"],
-        question=v["question"],
-        answer_type=v["answer_type"],
-        cubes=_to_cube_entries(v.get("cubes")),
-        free_text_content=v.get("free_text_content"),
-        top_x=v.get("top_x"),
-        total_weight_threshold=v.get("total_weight_threshold"),
-        is_draft=v.get("is_draft", False),
-        changed_fields=v.get("changed_fields"),
-        created_at=v["created_at"],
-        created_by=v["created_by"],
-        editor_name=editor_name,
-    )
+    return _version_to_dto(v, editor_name)

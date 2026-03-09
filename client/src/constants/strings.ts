@@ -83,6 +83,7 @@ export const strings = {
     selectCube: "בחר קובייה...",
     totalWeight: "סה״כ משקל:",
     distributeEvenly: "חלוקה שווה",
+    weightRange: (min: number, max: number) => `${min}–${max}`,
     topX: "TOP X",
     weightThreshold: "סף משקל כולל (%)",
     freeTextLabel: "תוכן התשובה *",
@@ -99,7 +100,7 @@ export const strings = {
 
   deleteDialog: {
     title: "מחיקת תיוג",
-    description: "האם אתה בטוח שברצונך למחוק תיוג זה? פעולה זו לא ניתנת לביטול.",
+    description: "האם אתה בטוח שברצונך למחוק תיוג זה? התיוג יסומן כנמחק ולא יוצג, אך הנתונים נשמרים במערכת.",
   },
 
   filters: {
@@ -117,6 +118,12 @@ export const strings = {
     rowsPerPage: "שורות בעמוד:",
     of: "מתוך",
     page: "עמוד",
+  },
+
+  versionSelector: {
+    current: "נוכחית",
+    version: (n: number) => `גרסה ${n}`,
+    selectVersion: "בחר גרסה",
   },
 
   versionHistory: {

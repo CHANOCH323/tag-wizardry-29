@@ -19,6 +19,7 @@ export default function Index() {
   const [loading, setLoading] = useState(true);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyTagId, setHistoryTagId] = useState<string | null>(null);
+  const [editFromVersion, setEditFromVersion] = useState<{ tagId: string; version: import("@/services/api.types").VersionDto } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const { toast } = useToast();
@@ -61,6 +62,7 @@ export default function Index() {
   };
 
   const handleOpenEditor = (id: string | null = null) => {
+    setEditFromVersion(null);
     setEditTagId(id);
     setEditorOpen(true);
   };
@@ -77,7 +79,15 @@ export default function Index() {
           <>
             <TagsTable
               tags={paginatedTags}
-              onEdit={(id) => handleOpenEditor(id)}
+              onEdit={(id, version) => {
+                if (version) {
+                  setEditFromVersion({ tagId: id, version });
+                  setEditTagId(id);
+                  setEditorOpen(true);
+                } else {
+                  handleOpenEditor(id);
+                }
+              }}
               onDelete={handleDelete}
               onViewHistory={(id) => { setHistoryTagId(id); setHistoryOpen(true); }}
             />
@@ -97,8 +107,9 @@ export default function Index() {
 
       <TagEditor
         open={editorOpen}
-        onClose={() => { setEditorOpen(false); setEditTagId(null); }}
-        editTagId={editTagId}
+        onClose={() => { setEditorOpen(false); setEditTagId(null); setEditFromVersion(null); }}
+        editTagId={editTagId ?? editFromVersion?.tagId ?? null}
+        initialVersion={editFromVersion?.version ?? null}
         onSaved={loadTags}
       />
 

@@ -13,7 +13,7 @@ interface Props {
 
 function exportToExcel(tags: TagDto[]) {
   const data = tags.map((t) => ({
-    [strings.export.id]: t.id.slice(0, 8),
+    [strings.export.id]: t.id,
     [strings.export.question]: t.question,
     [strings.export.answerType]: t.answer_type === "cubes" ? strings.tags.cubes : strings.tags.freeText,
     [strings.export.answerValue]: t.answer_type === "cubes" ? t.cubes?.map((c) => c.cube_name).join(", ") : t.free_text_content,
