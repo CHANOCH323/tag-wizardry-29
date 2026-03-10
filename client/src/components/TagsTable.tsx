@@ -2,8 +2,11 @@ import { useState, useCallback } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, History, ChevronLeft, ChevronRight } from "lucide-react";
+import { Edit, Trash2, History, GitBranch } from "lucide-react";
 import { format } from "date-fns";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import CubesPieChart from "./CubesPieChart";
 import SortableHead, { SortDir, SortKey } from "./SortableHead";
 import DeleteTagDialog from "./DeleteTagDialog";
@@ -38,115 +41,13 @@ function TagAnswerCell({ tag }: { tag: TagDto }) {
   return <span className="text-sm truncate block max-w-full">{tag.free_text_content || "-"}</span>;
 }
 
-function VersionSwitcher({
-  tagId,
-  versionCount,
-  viewingVersion,
-  onVersionChange,
-  onViewHistory,
-}: {
-  tagId: string;
-  versionCount: number;
-  viewingVersion: VersionDto | null;
-  onVersionChange: (tagId: string, version: VersionDto | null) => void;
-  onViewHistory: () => void;
-}) {
-  const [versions, setVersions] = useState<VersionDto[] | null>(null);
-  const [loading, setLoading] = useState(false);
-  const s = strings.versionSelector;
-  const currentIndex = viewingVersion && versions ? versions.findIndex((v) => v.id === viewingVersion.id) : 0;
-  const displayIndex = currentIndex >= 0 ? currentIndex : 0;
-
-  const loadVersions = useCallback(async (): Promise<VersionDto[]> => {
-    if (versions && versions.length > 0) return versions;
-    setLoading(true);
-    try {
-      const data = await fetchTagVersions(tagId);
-      setVersions(data);
-      return data;
-    } catch {
-      setVersions([]);
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  }, [tagId, versions]);
-
-  const goPrev = async () => {
-    const v = await loadVersions();
-    if (v.length < 2) return;
-    const next = displayIndex - 1;
-    if (next >= 0) onVersionChange(tagId, v[next]);
-  };
-
-  const goNext = async () => {
-    const v = await loadVersions();
-    if (v.length < 2) return;
-    const next = displayIndex + 1;
-    if (next < v.length) onVersionChange(tagId, v[next]);
-  };
-
-  const resetToLatest = () => {
-    onVersionChange(tagId, null);
-  };
-
-  if (versionCount <= 1) {
-    return (
-      <div className="flex items-center gap-1">
-        <span className="text-xs text-muted-foreground">{versionCount}</span>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onViewHistory} title={strings.common.history}>
-          <History className="h-3.5 w-3" />
-        </Button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex items-center gap-0.5">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-7 w-7"
-        onClick={goPrev}
-        disabled={loading || displayIndex <= 0}
-        title={s.current}
-      >
-        <ChevronRight className="h-3.5 w-3" />
-      </Button>
-      <button
-        type="button"
-        onClick={() => loadVersions()}
-        className="min-w-[3rem] px-1.5 py-0.5 text-xs rounded hover:bg-muted"
-        title={s.selectVersion}
-      >
-        {viewingVersion ? `${displayIndex + 1}/${versionCount}` : `1/${versionCount}`}
-      </button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-7 w-7"
-        onClick={goNext}
-        disabled={loading || (versions ? displayIndex >= versions.length - 1 : true)}
-        title={s.version(2)}
-      >
-        <ChevronLeft className="h-3.5 w-3" />
-      </Button>
-      {viewingVersion && (
-        <Button variant="ghost" size="sm" className="h-7 text-xs px-1.5" onClick={resetToLatest} title={s.current}>
-          ✓
-        </Button>
-      )}
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onViewHistory} title={strings.common.history}>
-        <History className="h-3.5 w-3" />
-      </Button>
-    </div>
-  );
-}
-
 export default function TagsTable({ tags, onEdit, onDelete, onViewHistory }: Props) {
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [viewingVersion, setViewingVersion] = useState<Record<string, VersionDto | null>>({});
+  const [selectorOpen, setSelectorOpen] = useState<string | null>(null);
+  const [selectorVersions, setSelectorVersions] = useState<VersionDto[]>([]);
+  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -159,6 +60,17 @@ export default function TagsTable({ tags, onEdit, onDelete, onViewHistory }: Pro
 
   const handleVersionChange = (tagId: string, version: VersionDto | null) => {
     setViewingVersion((v) => ({ ...v, [tagId]: version }));
+  };
+
+  const openVersionSelector = async (tagId: string) => {
+    setSelectorOpen(tagId);
+    setSelectedVersionId(viewingVersion[tagId]?.id || null);
+    try {
+      const versions = await fetchTagVersions(tagId);
+      setSelectorVersions(versions);
+    } catch {
+      setSelectorVersions([]);
+    }
   };
 
   const sortedTags = [...tags];
@@ -242,19 +154,17 @@ export default function TagsTable({ tags, onEdit, onDelete, onViewHistory }: Pro
                     <TableCell className="text-sm">{displayTag.last_editor}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{format(new Date(tag.updated_at), "dd/MM/yy HH:mm")}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{format(new Date(tag.created_at), "dd/MM/yy HH:mm")}</TableCell>
-                    <TableCell>
-                      <VersionSwitcher
-                        tagId={tag.id}
-                        versionCount={tag.version_count}
-                        viewingVersion={v ?? null}
-                        onVersionChange={handleVersionChange}
-                        onViewHistory={() => onViewHistory(tag.id)}
-                      />
-                    </TableCell>
+                    <TableCell className="text-center">{tag.version_count}</TableCell>
                     <TableCell>
                       <div className="flex gap-1 items-center justify-end">
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(tag.id, v ?? undefined)} title={strings.common.edit}>
                           <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openVersionSelector(tag.id)} title={strings.versionSelector.selectVersion}>
+                          <GitBranch className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onViewHistory(tag.id)} title={strings.common.history}>
+                          <History className="h-4 w-4" />
                         </Button>
                         <DeleteTagDialog onConfirm={() => onDelete(tag.id)} />
                       </div>
@@ -266,6 +176,36 @@ export default function TagsTable({ tags, onEdit, onDelete, onViewHistory }: Pro
           </TableBody>
         </Table>
       </div>
+
+      <Dialog open={!!selectorOpen} onOpenChange={() => setSelectorOpen(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{strings.versionSelector.selectVersion}</DialogTitle>
+          </DialogHeader>
+          <RadioGroup value={selectedVersionId || ""} onValueChange={setSelectedVersionId}>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="" id="current" />
+              <Label htmlFor="current">{strings.versionSelector.current}</Label>
+            </div>
+            {selectorVersions.map((v, i) => (
+              <div key={v.id} className="flex items-center space-x-2">
+                <RadioGroupItem value={v.id} id={v.id} />
+                <Label htmlFor={v.id}>v{selectorVersions.length - i} - {v.question.slice(0, 30)}...</Label>
+              </div>
+            ))}
+          </RadioGroup>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setSelectorOpen(null)}>{strings.common.cancel}</Button>
+            <Button onClick={() => {
+              if (selectorOpen) {
+                const version = selectedVersionId ? selectorVersions.find(v => v.id === selectedVersionId) || null : null;
+                handleVersionChange(selectorOpen, version);
+                setSelectorOpen(null);
+              }
+            }}>{strings.common.save}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

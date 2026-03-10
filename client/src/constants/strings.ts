@@ -24,18 +24,18 @@ export const strings = {
   },
 
   app: {
-    title: "ניהול תיוגים",
+    title: "Stream",
   },
 
   auth: {
     login: "התחבר",
     loggingIn: "מתחבר...",
-    loginTitle: "מערכת ניהול תיוגים",
+    loginTitle: "Stream",
     loginSubtitle: "התחבר למערכת כדי להמשיך",
     loginError: "שגיאה בהתחברות",
     register: "הרשם",
     registering: "נרשם...",
-    registerTitle: "הרשמה למערכת",
+    registerTitle: "הרשמה ל-Stream",
     registerSubtitle: "צור חשבון חדש",
     registerError: "שגיאה בהרשמה",
     registerSuccess: "נרשמת בהצלחה!",

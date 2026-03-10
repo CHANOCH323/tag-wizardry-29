@@ -6,12 +6,12 @@ from functools import lru_cache
 class Settings(BaseSettings):
     """Application settings loaded from environment."""
 
-    app_name: str = "Tag Wizardry API"
+    app_name: str = "Stream API"
     debug: bool = False
 
     # MongoDB
     mongodb_url: str = "mongodb://localhost:27017"
-    mongodb_db_name: str = "tag_wizardry"
+    mongodb_db_name: str = "stream"
 
     # JWT
     secret_key: str = "your-secret-key-change-in-production"
