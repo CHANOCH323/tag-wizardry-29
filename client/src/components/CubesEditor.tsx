@@ -1,11 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, X } from "lucide-react";
+import { X } from "lucide-react";
 import { strings } from "@/constants/strings";
 
 interface CubeEntry {
@@ -26,6 +25,14 @@ interface Props {
 
 export default function CubesEditor({ cubes, availableCubes, topX, weightThreshold, onChange, onTopXChange, onWeightThresholdChange }: Props) {
   const [selectedCubeToAdd, setSelectedCubeToAdd] = useState("");
+  const [cubeSearch, setCubeSearch] = useState("");
+
+  const filteredCubes = useMemo(() => {
+    const normalized = cubeSearch.trim().toLowerCase();
+    return availableCubes
+      .filter((c) => !cubes.some((existing) => existing.cube_id === c.cube_id))
+      .filter((c) => (normalized ? c.name.toLowerCase().includes(normalized) : true));
+  }, [availableCubes, cubes, cubeSearch]);
 
   const addCube = () => {
     if (!selectedCubeToAdd) return;
@@ -33,6 +40,7 @@ export default function CubesEditor({ cubes, availableCubes, topX, weightThresho
     if (!cube || cubes.find((c) => c.cube_id === cube.cube_id)) return;
     onChange([...cubes, { cube_id: cube.cube_id, cube_name: cube.name, weight: 0 }]);
     setSelectedCubeToAdd("");
+    setCubeSearch("");
   };
 
   const quickAddCube = () => {
@@ -62,15 +70,36 @@ export default function CubesEditor({ cubes, availableCubes, topX, weightThresho
       <div className="flex items-end gap-2">
         <div className="flex-1">
           <Label className="mb-1 block">{strings.tagEditor.addCube}</Label>
-          <Select value={selectedCubeToAdd} onValueChange={setSelectedCubeToAdd}>
-            <SelectTrigger><SelectValue placeholder={strings.tagEditor.selectCube} /></SelectTrigger>
-            <SelectContent>
-              {unusedCubes.map((c) => <SelectItem key={c.cube_id} value={c.cube_id}>{c.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <div className="relative">
+            <Input
+              value={cubeSearch}
+              onChange={(e) => {
+                setCubeSearch(e.target.value);
+                setSelectedCubeToAdd("");
+              }}
+              placeholder={strings.tagEditor.selectCube}
+            />
+            {filteredCubes.length > 0 && (
+              <div className="absolute z-10 mt-1 max-h-40 w-full overflow-auto rounded border bg-white shadow-lg">
+                {filteredCubes.map((c) => (
+                  <button
+                    type="button"
+                    key={c.cube_id}
+                    onClick={() => {
+                      setSelectedCubeToAdd(c.cube_id);
+                      setCubeSearch(c.name);
+                    }}
+                    className="w-full text-left px-2 py-1 hover:bg-muted"
+                  >
+                    {c.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         <Button variant="outline" size="icon" onClick={addCube} disabled={!selectedCubeToAdd}>
-          <Plus className="h-4 w-4" />
+          +
         </Button>
         <Button variant="secondary" size="sm" onClick={quickAddCube} disabled={unusedCubes.length === 0}>
           {strings.tagEditor.quickAddCube}
