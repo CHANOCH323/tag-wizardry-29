@@ -80,6 +80,7 @@ export const strings = {
     questionPlaceholder: "הזן את השאלה...",
     answerTypeLabel: "סוג תשובה *",
     addCube: "הוסף קובייה",
+    quickAddCube: "פש קוביה",
     selectCube: "בחר קובייה...",
     totalWeight: "סה״כ משקל:",
     distributeEvenly: "חלוקה שווה",

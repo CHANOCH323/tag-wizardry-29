@@ -35,6 +35,12 @@ export default function CubesEditor({ cubes, availableCubes, topX, weightThresho
     setSelectedCubeToAdd("");
   };
 
+  const quickAddCube = () => {
+    const candidate = availableCubes.find((c) => !cubes.some((existing) => existing.cube_id === c.cube_id));
+    if (!candidate) return;
+    onChange([...cubes, { cube_id: candidate.cube_id, cube_name: candidate.name, weight: 0 }]);
+  };
+
   const removeCube = (cubeId: string) => onChange(cubes.filter((c) => c.cube_id !== cubeId));
 
   const setCubeWeight = (cubeId: string, weight: number) => {
@@ -65,6 +71,9 @@ export default function CubesEditor({ cubes, availableCubes, topX, weightThresho
         </div>
         <Button variant="outline" size="icon" onClick={addCube} disabled={!selectedCubeToAdd}>
           <Plus className="h-4 w-4" />
+        </Button>
+        <Button variant="secondary" size="sm" onClick={quickAddCube} disabled={unusedCubes.length === 0}>
+          {strings.tagEditor.quickAddCube}
         </Button>
       </div>
 
