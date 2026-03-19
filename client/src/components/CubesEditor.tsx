@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Combobox } from "@/components/ui";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
@@ -26,14 +26,14 @@ interface Props {
 export default function CubesEditor({ cubes, availableCubes, topX, weightThreshold, onChange, onTopXChange, onWeightThresholdChange }: Props) {
   const [selectedCubeToAdd, setSelectedCubeToAdd] = useState("");
   const [cubeSearch, setCubeSearch] = useState("");
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const filteredCubes = useMemo(() => {
-    const normalized = cubeSearch.trim().toLowerCase();
-    return availableCubes
-      .filter((c) => !cubes.some((existing) => existing.cube_id === c.cube_id))
-      .filter((c) => (normalized ? c.name.toLowerCase().includes(normalized) : true));
-  }, [availableCubes, cubes, cubeSearch]);
+  const comboboxItems = useMemo(
+    () =>
+      availableCubes
+        .filter((c) => !cubes.some((existing) => existing.cube_id === c.cube_id))
+        .map((c) => ({ value: c.cube_id, label: c.name })),
+    [availableCubes, cubes],
+  );
 
   const addCube = () => {
     if (!selectedCubeToAdd) return;
@@ -72,36 +72,22 @@ export default function CubesEditor({ cubes, availableCubes, topX, weightThresho
         <div className="flex-1">
           <Label className="mb-1 block">{strings.tagEditor.addCube}</Label>
           <div className="relative">
-            <Input
+            <Label className="mb-1 hidden">{strings.tagEditor.selectCube}</Label>
+            <Combobox
               value={cubeSearch}
-              onFocus={() => setIsDropdownOpen(true)}
-              onChange={(e) => {
-                setCubeSearch(e.target.value);
+              items={comboboxItems}
+              onValueChange={(v) => {
+                setCubeSearch(v);
                 setSelectedCubeToAdd("");
-                setIsDropdownOpen(true);
               }}
-              onBlur={() => setTimeout(() => setIsDropdownOpen(false), 150)}
+              onSelect={(value) => {
+                const selected = comboboxItems.find((item) => item.value === value);
+                if (!selected) return;
+                setSelectedCubeToAdd(selected.value);
+                setCubeSearch(selected.label);
+              }}
               placeholder={strings.tagEditor.selectCube}
             />
-            {isDropdownOpen && cubeSearch.trim().length > 0 && filteredCubes.length > 0 && (
-              <div className="absolute z-10 mt-1 max-h-40 w-full overflow-auto rounded border bg-white shadow-lg">
-                {filteredCubes.map((c) => (
-                  <button
-                    type="button"
-                    key={c.cube_id}
-                    onMouseDown={(e) => e.preventDefault()} /* keep input focus valid */
-                    onClick={() => {
-                      setSelectedCubeToAdd(c.cube_id);
-                      setCubeSearch(c.name);
-                      setIsDropdownOpen(false);
-                    }}
-                    className="w-full text-left px-2 py-1 hover:bg-muted"
-                  >
-                    {c.name}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         </div>
         <Button variant="outline" size="icon" onClick={addCube} disabled={!selectedCubeToAdd}>
