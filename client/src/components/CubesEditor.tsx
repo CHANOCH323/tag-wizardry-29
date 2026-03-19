@@ -26,6 +26,7 @@ interface Props {
 export default function CubesEditor({ cubes, availableCubes, topX, weightThreshold, onChange, onTopXChange, onWeightThresholdChange }: Props) {
   const [selectedCubeToAdd, setSelectedCubeToAdd] = useState("");
   const [cubeSearch, setCubeSearch] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const filteredCubes = useMemo(() => {
     const normalized = cubeSearch.trim().toLowerCase();
@@ -73,21 +74,26 @@ export default function CubesEditor({ cubes, availableCubes, topX, weightThresho
           <div className="relative">
             <Input
               value={cubeSearch}
+              onFocus={() => setIsDropdownOpen(true)}
               onChange={(e) => {
                 setCubeSearch(e.target.value);
                 setSelectedCubeToAdd("");
+                setIsDropdownOpen(true);
               }}
+              onBlur={() => setTimeout(() => setIsDropdownOpen(false), 150)}
               placeholder={strings.tagEditor.selectCube}
             />
-            {filteredCubes.length > 0 && (
+            {isDropdownOpen && cubeSearch.trim().length > 0 && filteredCubes.length > 0 && (
               <div className="absolute z-10 mt-1 max-h-40 w-full overflow-auto rounded border bg-white shadow-lg">
                 {filteredCubes.map((c) => (
                   <button
                     type="button"
                     key={c.cube_id}
+                    onMouseDown={(e) => e.preventDefault()} /* keep input focus valid */
                     onClick={() => {
                       setSelectedCubeToAdd(c.cube_id);
                       setCubeSearch(c.name);
+                      setIsDropdownOpen(false);
                     }}
                     className="w-full text-left px-2 py-1 hover:bg-muted"
                   >
